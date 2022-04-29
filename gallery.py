@@ -31,7 +31,6 @@ def prevBn():
     rootLabel.grid_forget()
     prevButton.grid_forget()
     nextButton.grid_forget()
-    exitButton.grid_forget()
 
     cnt -= 1
 
@@ -59,7 +58,6 @@ def nextBn():
     rootLabel.grid_forget()
     prevButton.grid_forget()
     nextButton.grid_forget()
-    exitButton.grid_forget()
 
     cnt += 1
 
@@ -82,10 +80,15 @@ def nextBn():
 # Buttons
 prevButton = Button(root, text='<<<<<<<<<<', width=40, height=2, command=prevBn)
 nextButton = Button(root, text='>>>>>>>>>>', width=40, height=2, command=nextBn)
-exitButton = Button(root, text='Exit', command=root.quit)
 
 # Button grid
 prevButton.grid(row=1, column=0, pady=0)
 nextButton.grid(row=1, column=2, pady=0)
+
+root.update()
+root.minsize(root.winfo_width(), root.winfo_height())
+x_cordinate = int((root.winfo_screenwidth() / 2) - (root.winfo_width() / 2))
+y_cordinate = int((root.winfo_screenheight() / 2) - (root.winfo_height() / 2))
+root.geometry("+{}+{}".format(x_cordinate, y_cordinate - 20))
 
 root.mainloop()

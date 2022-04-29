@@ -1,6 +1,8 @@
 import sys
 import pygame
+from pygame import mixer
 from pygame.locals import *
+import TextLoad
 
 pygame.init()
 pygame.display.set_caption('Optosol iDigital')
@@ -10,6 +12,9 @@ height = 1020
 screen = pygame.display.set_mode((width, height), FULLSCREEN, vsync=1)
 center_X, center_Y = screen.get_rect().centerx, screen.get_rect().centery
 delta_Y = 0
+delta = [0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2]
+delta_index = 0
+delta_num = delta[delta_index]
 
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -20,7 +25,6 @@ col_index = 0
 fore_index = fore_col[col_index]
 back_index = back_col[col_index]
 
-
 text_size = [60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180]
 index = 0
 size = text_size[index]
@@ -28,9 +32,83 @@ size = text_size[index]
 running = True
 
 
+def playText():
+    mixer.music.load('Temp_Audio/load_text.mp3')
+    mixer.music.play()
+
+
+def welcomeText():
+    mixer.music.load('Temp_Audio/welcome.mp3')
+    mixer.music.play()
+
+
+def pausePlay():
+    mixer.music.pause()
+
+
+def unpausePlay():
+    mixer.music.unpause()
+
+
+def stopPlay():
+    mixer.music.stop()
+
+
+def increaseSpeed():
+    global delta, delta_num, delta_index
+    if delta_index == 9:
+        delta_index = 0
+    else:
+        delta_index += 1
+    delta_num = delta[delta_index]
+
+
+def decreaseSpeed():
+    global delta, delta_num, delta_index
+    if delta_index >= 1:
+        delta_index -= 1
+    delta_num = delta[delta_index]
+
+
+read_img = pygame.image.load('icon/conductor-icon.png').convert_alpha()
+
+
+class Button:
+    def __init__(self, x, y, image, scale):
+        width_1 = image.get_width()
+        height_1 = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width_1 * scale), int(height_1 * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw(self):
+        action = False
+        # get mouse position
+        pos = pygame.mouse.get_pos()
+
+        # check mouseover and clicked conditions
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
+
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
+
+
+read_button = Button(1800, 950, read_img, 0.5)
+
+
 def pause():
     global paused, delta_Y, fore_index, back_index, col_index, fore_col, back_col, size, index
+
     paused = True
+
+    pausePlay()
 
     while paused:
         for event in pygame.event.get():
@@ -41,8 +119,7 @@ def pause():
                 if event.key == pygame.K_RETURN:
                     paused = False
                 elif event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    quit()
+                    welcome()
                 elif event.key == pygame.K_SPACE:
                     if col_index == 5:
                         col_index = 0
@@ -75,7 +152,7 @@ def pause():
 
 
 def num2():
-    with open('load_text_2', 'r') as second:
+    with TextLoad.CustomOpen('load_text_2') as second:
         lines2 = second.read()
 
     global delta_Y, fore_index, back_index, col_index, fore_col, back_col, size, index
@@ -86,10 +163,10 @@ def num2():
                 quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    quit()
+                    welcome()
                 elif event.key == pygame.K_RETURN:
                     pause()
+                    unpausePlay()
                 elif event.key == pygame.K_SPACE:
                     if col_index == 5:
                         col_index = 0
@@ -116,17 +193,27 @@ def num2():
                     if index <= 12:
                         index -= 1
                     size = text_size[index]
-
-            userInput2 = pygame.key.get_pressed()
-            if userInput2[pygame.K_p]:
-                pause()
+                elif event.key == pygame.K_z:
+                    increaseSpeed()
+                elif event.key == pygame.K_x:
+                    decreaseSpeed()
+                elif event.key == pygame.K_p:
+                    playText()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    increaseSpeed()
+                elif event.button == 3:
+                    decreaseSpeed()
 
         screen.fill(back_index)
+
+        if read_button.draw():
+            playText()
 
         msg_list2 = []
         pos_list2 = []
         a1 = 0
-        delta_Y -= 0.2
+        delta_Y -= delta_num
 
         font2 = pygame.font.SysFont('Arial', size, bold=True, italic=False)
         # msg = font.render(lines, True, fore_index, back_index)
@@ -138,8 +225,8 @@ def num2():
             pos_list2.append(pos2)
             a1 = a1 + 1
 
-        if center_Y + delta_Y + 80 * (len(lines2.split('\n'))) < 0:
-            delta_Y = 250
+        if center_Y + delta_Y + 100 * (len(lines2.split('\n'))) < 0:
+            delta_Y = 300
 
         for b in range(a1):
             screen.blit(msg_list2[b], pos_list2[b])
@@ -148,7 +235,7 @@ def num2():
 
 
 def num():
-    with open('load_text_1', 'r') as first:
+    with TextLoad.CustomOpen('load_text_1') as first:
         lines1 = first.read()
 
     global delta_Y, fore_index, back_index, col_index, fore_col, back_col, size, index
@@ -159,10 +246,10 @@ def num():
                 quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    quit()
+                    welcome()
                 elif event.key == pygame.K_RETURN:
                     pause()
+                    unpausePlay()
                 elif event.key == pygame.K_SPACE:
                     if col_index == 5:
                         col_index = 0
@@ -189,17 +276,27 @@ def num():
                     if index <= 12:
                         index -= 1
                     size = text_size[index]
-
-            userInput1 = pygame.key.get_pressed()
-            if userInput1[pygame.K_p]:
-                pause()
+                elif event.key == pygame.K_z:
+                    increaseSpeed()
+                elif event.key == pygame.K_x:
+                    decreaseSpeed()
+                elif event.key == pygame.K_p:
+                    playText()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    increaseSpeed()
+                elif event.button == 3:
+                    decreaseSpeed()
 
         screen.fill(back_index)
+
+        if read_button.draw():
+            playText()
 
         msg_list1 = []
         pos_list1 = []
         a = 0
-        delta_Y -= 0.2
+        delta_Y -= delta_num
 
         font1 = pygame.font.SysFont('Arial', size, bold=True, italic=False)
         # msg = font.render(lines, True, fore_index, back_index)
@@ -211,8 +308,8 @@ def num():
             pos_list1.append(pos1)
             a = a + 1
 
-        if center_Y + delta_Y + 80 * (len(lines1.split('\n'))) < 0:
-            delta_Y = 250
+        if center_Y + delta_Y + 100 * (len(lines1.split('\n'))) < 0:
+            delta_Y = 300
 
         for b in range(a):
             screen.blit(msg_list1[b], pos_list1[b])
@@ -221,6 +318,9 @@ def num():
 
 
 def welcome():
+
+    stopPlay()
+
     while running:
         screen.fill(black)
         text = """
@@ -237,12 +337,15 @@ def welcome():
         for texts in text.split('\n'):
             screen_text = font.render(texts, True, yellow, black)
             text_list.append(screen_text)
-            position = screen_text.get_rect(center=(center_X-200, center_Y-300 + i*150))
+            position = screen_text.get_rect(center=(center_X - 200, center_Y - 300 + i * 150))
             position_list.append(position)
             i = i + 1
 
         for j in range(i):
             screen.blit(text_list[j], position_list[j])
+
+        if read_button.draw():
+            welcomeText()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -258,8 +361,8 @@ def welcome():
 
 
 def mainLoop():
-    with open('load_text', 'r') as main:
-        words = main.read()
+    with TextLoad.CustomOpen('load_text') as mainRead:
+        words = mainRead.read()
 
     global delta_Y, fore_index, back_index, col_index, fore_col, back_col, index, size, paused
 
@@ -275,6 +378,7 @@ def mainLoop():
                     # running = False
                 elif event.key == pygame.K_RETURN:
                     pause()
+                    unpausePlay()
                 elif event.key == pygame.K_SPACE:
                     if col_index == 5:
                         col_index = 0
@@ -300,6 +404,17 @@ def mainLoop():
                     if index <= 12:
                         index -= 1
                     size = text_size[index]
+                elif event.key == pygame.K_z:
+                    increaseSpeed()
+                elif event.key == pygame.K_x:
+                    decreaseSpeed()
+                elif event.key == pygame.K_p:
+                    playText()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    increaseSpeed()
+                elif event.button == 3:
+                    decreaseSpeed()
 
             # userInput = pygame.key.get_pressed()
             # if userInput[pygame.K_p]:
@@ -307,10 +422,13 @@ def mainLoop():
 
         screen.fill(back_index)
 
+        if read_button.draw():
+            playText()
+
         msg_list = []
         pos_list = []
         i = 0
-        delta_Y -= 0.2
+        delta_Y -= delta_num
 
         font = pygame.font.SysFont('Arial', size, bold=True, italic=False)
         # msg = font.render(lines, True, fore_index, back_index)
@@ -322,8 +440,8 @@ def mainLoop():
             pos_list.append(pos)
             i = i + 1
 
-        if center_Y + delta_Y + 80 * (len(words.split('\n'))) < 0:
-            delta_Y = 250
+        if center_Y + delta_Y + 100 * (len(words.split('\n'))) < 0:
+            delta_Y = 300
 
         for j in range(i):
             screen.blit(msg_list[j], pos_list[j])
@@ -331,5 +449,10 @@ def mainLoop():
         pygame.display.update()
 
 
-welcome()
-pygame.quit()
+def main():
+    welcome()
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()
